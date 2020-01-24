@@ -2,7 +2,6 @@
 
 --try a smooth movement
 
---animate mouth
 
 --optimize pos[1] pos[2] into pos = {1,2}
 
@@ -16,6 +15,8 @@ function love.load()
 	score = 0
 	
 	load_textures()
+	movementsound = love.audio.newSource("sounds/move1.ogg", "static")
+	pickup = love.audio.newSource("sounds/pickup.ogg", "static")
 
 	poweruptimer = 0
 	lives = 10
@@ -101,6 +102,7 @@ function player_move()
 			map[pos[2]][pos[1]] = 0 	
 			score = score + 100
 		elseif map[pos[2]][pos[1]] == 3 then --power up
+			pickup:play()
 			poweruptimer = 5
 			map[pos[2]][pos[1]] = 0 
 		end
@@ -232,9 +234,13 @@ end
 local mouth = false
 function love.draw()
 	panimation_update = panimation_update + 0.1
+	--animate player with noise
+	if dir[1] ~= 0 or dir[2] ~= 0 then
 	if panimation_update >= 0.5 then
+		movementsound:play()
 		mouth = not mouth
 		panimation_update = 0
+	end
 	end
 	calculate_game_scale(mapsize)
 	
