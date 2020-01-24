@@ -7,7 +7,7 @@
 --optimize pos[1] pos[2] into pos = {1,2}
 
 function love.load()
-	love.window.setMode(800, 600, {resizable=true, vsync=false, minwidth=400, minheight=300})
+	love.window.setMode(800, 600, {resizable=true, vsync=true, minwidth=400, minheight=300})
 
 	Grid = require ("jumper.grid") -- The grid class
 	Pathfinder = require ("jumper.pathfinder") -- The pathfinder class
@@ -39,7 +39,6 @@ end
 function love.update(dt)
 	if lives > 0 then
 		aiupdate = aiupdate + dt
-		playerupdate = playerupdate + dt
 		if poweruptimer > 0 then
 			poweruptimer = poweruptimer - dt
 			if poweruptimer < 0 then
@@ -53,10 +52,7 @@ function love.update(dt)
 			aiupdate = 0
 		end
 		--move the player
-		if playerupdate > (gamespeed/2) then
-			player_move()
-			playerupdate = 0
-		end
+		player_move()
 	else
 		love.event.quit()
 	end
@@ -72,18 +68,29 @@ function player_move()
 		local olddir = {0,0}
 		if dirbuffer then
 			olddir = {dir[1],dir[2]}
-			dir = dirbuffer
+			dir = {dirbuffer[1],dirbuffer[2]}
 		end
 		--map limit
-		if pos[1] + dir[1] < 1 or pos[2] + dir[2] < 1 or pos[1] + dir[1] > mapsize or pos[2] + dir[2] > mapsize then
-			dir = {0,0}
-		end
-		
-		if map[pos[2]+dir[2]][pos[1]+dir[1]] == 1 then
+		if (pos[1] + dir[1] < 1 or pos[2] + dir[2] < 1 or pos[1] + dir[1] > mapsize or pos[2] + dir[2] > mapsize) then
 			if not dirbuffer then --regular stop
 				dir = {0,0}
 			end
+			--try to hold buffer
+			if pos[1] + olddir[1] < 1 or pos[2] + olddir[2] < 1 or pos[1] + olddir[1] > mapsize or pos[2] + olddir[2] > mapsize then
+				dir = {0,0}
+			else
+				dir = olddir
+			end
+		end
+		
+		if map[pos[2]+dir[2]][pos[1]+dir[1]] == 1 then
+		
+			if not dirbuffer then --regular stop
+				dir = {0,0}
+			end
+							
 			if dirbuffer and map[pos[2]+dirbuffer[2]][pos[1]+dirbuffer[1]] == 1 then
+				--try to hold buffer
 				if map[pos[2]+olddir[2]][pos[1]+olddir[1]] == 1 then
 					dir = {0,0}
 				else
@@ -114,8 +121,8 @@ function player_move()
 		end
 	end
 	
-	pos[1] = pos[1] + (dir[1]/2)
-	pos[2] = pos[2] + (dir[2]/2)
+	pos[1] = pos[1] + (dir[1]/8)
+	pos[2] = pos[2] + (dir[2]/8)
 	realpos = {math.floor(pos[1]),math.floor(pos[2])}
 end
 
@@ -124,13 +131,13 @@ function love.keypressed(key)
 	local oldpos1 = pos[1]
 	local oldpos2 = pos[2]
 	--temporarily store the direction to do collision checks
-	if key == 'up' then
+	if key == 'up' and realpos[2] > 1 then
 		dirbuffer={0,-1}
-	elseif key == 'down' then
+	elseif key == 'down' and realpos[2] < mapsize then
 		dirbuffer={0,1}
-	elseif key == 'left' then
+	elseif key == 'left' and realpos[1] > 1 then
 		dirbuffer={-1,0}
-	elseif key == 'right' then
+	elseif key == 'right' and realpos[1] < mapsize then
 		dirbuffer={1,0}
 	end
 	if key == 'escape' then
@@ -190,6 +197,8 @@ function ai_move()
 			--remember old value
 			local aioldpos1 = demons[dnumber][1]
 			local aioldpos2 = demons[dnumber][2] 
+			
+			
 			--move randomly if no path
 			if poweruptimer > 0 then
 				local z = math.random(1,2)
@@ -200,6 +209,7 @@ function ai_move()
 					demons[dnumber][1] = aioldpos1
 					demons[dnumber][2] = aioldpos2
 				end
+			
 			elseif type(position.path) == "table" then
 				--print(dump(position.path[2]))
 				demons[dnumber][1] = position.path[2][1]
