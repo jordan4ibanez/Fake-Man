@@ -1,54 +1,8 @@
 --flip x and y when generating map to fix all other values ( x is first, which isn't correct for indexing, it should be y)
 
---also when ai moving check if another ai in position then don't move if in position to stop stacking
-
 --try a smooth movement
 
 --name tiles 1,2,3,4, etc and then load it all in a loop, add new tiles onto the numbers to save lines of code, add the imgs into tile table then when rendering do love.draw[number] to easy render from tileset
-
-function dump(o)
-   if type(o) == 'table' then
-      local s = '{ '
-      for k,v in pairs(o) do
-         if type(k) ~= 'number' then k = '"'..k..'"' end
-         s = s .. '['..k..'] = ' .. dump(v) .. ','
-      end
-      return s .. '} '
-   else
-      return tostring(o)
-   end
-end
-
-function map_generate()
-	map = {}
-
-	for x = 1,mapsize do
-	map[x]={}
-	for y = 1,mapsize do
-		local perlin = math.random() * math.random()
-		map[x][y] = 0
-		if perlin >= 0.45 then
-			map[x][y] = 1
-		else
-			map[x][y]= 2
-		end
-		if perlin >= 0.9 then
-			map[x][y] = 3
-		end
-	end
-	end
-	
-	--reset players position for debug
-	pos = {math.random(1,mapsize),math.random(1,mapsize)}
-	
-	--generate demons here for debug
-	demons = {}
-	demonnumber = 9
-	for i = 1,demonnumber do
-		demons[i] = {math.random(1,mapsize),math.random(1,mapsize),path={}}
-	end
-end
-
 function calculate_game_scale(mapsize1)
 	local width, height, flags = love.window.getMode( )
 
@@ -67,6 +21,7 @@ function love.load()
 
 	Grid = require ("jumper.grid") -- The grid class
 	Pathfinder = require ("jumper.pathfinder") -- The pathfinder class
+	require("helpers")
 	math.randomseed( os.time() )
 	score = 0
 	tile = love.graphics.newImage("textures/tile.png")
@@ -225,15 +180,15 @@ function ai_pathfind()
 	end
 end
 
+--this controls the actual "ai" of the demons
 function ai_move()
 	for dnumber,position in pairs(demons) do
 		if position[1] ~= -1 and position[2] ~= -1 then
-			--move randomly if no path
+			--remember old value
 			local aioldpos1 = demons[dnumber][1]
 			local aioldpos2 = demons[dnumber][2] 
+			--move randomly if no path
 			if poweruptimer > 0 then
-				--remember old value
-				
 				local z = math.random(1,2)
 				demons[dnumber][z] = demons[dnumber][z] + math.random(-1,1)
 						
@@ -282,6 +237,7 @@ function love.draw()
 	
 	for dnumber,data in pairs(demons) do
 		if data[1] ~= -1 and data[2] ~= -1 then
+			--this is debug
 			--print(dump(data.path))
 			--draw path
 			--if type(data.path) == "table" then
