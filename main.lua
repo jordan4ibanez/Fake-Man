@@ -239,7 +239,11 @@ function love.draw()
 			if data[1] and data[2] then
 				--don't draw if "dead"
 				if data[1] ~= -1 and data[2] ~= -1 then
-					love.graphics.draw(tileset.ai, data[1]*tilesize, data[2]*tilesize,0,scale,scale)
+					if poweruptimer == 0 then
+						love.graphics.draw(tileset.ai, data[1]*tilesize, data[2]*tilesize,0,scale,scale)
+					else
+						love.graphics.draw(tileset.aiscared, data[1]*tilesize, data[2]*tilesize,0,scale,scale)
+					end
 				end
 			end
 		end
