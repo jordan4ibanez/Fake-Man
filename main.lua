@@ -236,6 +236,17 @@ function ai_move()
 				
 				local z = math.random(1,2)
 				demons[dnumber][z] = demons[dnumber][z] + math.random(-1,1)
+				
+				--stops ghosts from stacking in same position
+				for ynumber,yposition in pairs(demons) do
+					if yposition[1] ~= -1 and yposition[2] ~= -1 and dnumber ~= ynumber then --don't check self
+						if demons[dnumber][1] == demons[ynumber][1] and demons[dnumber][2] == demons[ynumber][2] then
+							demons[dnumber][1] = aioldpos1
+							demons[dnumber][2] = aioldpos2
+						end
+					end
+				end
+						
 				--return to old pos "wall detection"
 				if demons[dnumber][1] < 1 or demons[dnumber][2]< 1 or demons[dnumber][1] > mapsize or demons[dnumber][2] > mapsize or map[demons[dnumber][2]][demons[dnumber][1]] == 1 then
 					demons[dnumber][1] = aioldpos1
@@ -244,7 +255,16 @@ function ai_move()
 			elseif type(position.path) == "table" then
 				--print(dump(position.path[2]))
 				demons[dnumber][1] = position.path[2][1]
-				demons[dnumber][2] = position.path[2][2]				
+				demons[dnumber][2] = position.path[2][2]
+				--stops ghosts from stacking in same position
+				for ynumber,yposition in pairs(demons) do
+					if yposition[1] ~= -1 and yposition[2] ~= -1 and dnumber ~= ynumber then --don't check self
+						if demons[dnumber][1] == demons[ynumber][1] and demons[dnumber][2] == demons[ynumber][2] then
+							demons[dnumber][1] = aioldpos1
+							demons[dnumber][2] = aioldpos2
+						end
+					end
+				end			
 				--table.remove (position.path, 1)
 			end
 				
