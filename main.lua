@@ -33,7 +33,7 @@ function love.load()
 	gamespeed = 0.2
 	
 	aiupdate = 0
-	playerupdate = 0
+	panimation_update = 0
 end
 
 function love.update(dt)
@@ -229,7 +229,13 @@ function ai_move()
 	end
 end
 
+local mouth = false
 function love.draw()
+	panimation_update = panimation_update + 0.1
+	if panimation_update >= 0.5 then
+		mouth = not mouth
+		panimation_update = 0
+	end
 	calculate_game_scale(mapsize)
 	
 	love.graphics.print("SCORE: "..score, 0, 0)
@@ -297,10 +303,13 @@ function love.draw()
 		size3 = tilesize
 		size4 = 0
 	end
-	if poweruptimer == 0 then
-		love.graphics.draw(tileset.player, pos[1]*tilesize+size3+size0, pos[2]*tilesize+size4,size2,scale*size1,scale)
+
+	--animate mouth
+	if mouth == true then
+		love.graphics.draw(tileset.player_mouthclose, pos[1]*tilesize+size3+size0, pos[2]*tilesize+size4,size2,scale*size1,scale)
 	else
-		love.graphics.draw(tileset.powerman, pos[1]*tilesize+size3+size0, pos[2]*tilesize+size4,size2,scale*size1,scale)
+		love.graphics.draw(tileset.player, pos[1]*tilesize+size3+size0, pos[2]*tilesize+size4,size2,scale*size1,scale)
 	end
+
 	love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 10)
 end
