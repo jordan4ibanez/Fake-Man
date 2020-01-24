@@ -20,6 +20,8 @@ function love.load()
 	die = love.audio.newSource("sounds/die.ogg", "static")
 	new = love.audio.newSource("sounds/new.ogg", "static")
 	scrambled = love.audio.newSource("sounds/scrambled.ogg", "static")
+	enemy = love.audio.newSource("sounds/enemy.ogg", "static")
+
 
 	poweruptimer = 0
 	lives = 10
@@ -247,8 +249,16 @@ function ai_move()
 		local diff = {pos[1]-demons[dnumber].pos[1],pos[2]-demons[dnumber].pos[2]}
 		--print(dump(diff[1]))
 		if diff[1] >= -0.9375 and diff[1] <= 0.9375 and diff[2] >= -0.9375 and diff[2] <= 0.9375 then
-			hit_timer = 10
-			die:play()
+			if poweruptimer == 0 then
+				lives = lives - 1
+				hit_timer = 10
+				die:play()
+			else
+				demons[dnumber].pos[1] = -1
+				demons[dnumber].pos[2] = -1
+				score = score + 10000
+				enemy:play()
+			end				
 		end
 	end
 	
@@ -261,8 +271,8 @@ local cycling_table = {{-1,0},{0,-1},{1,0},{0,1}}
 local sound_played = false
 local sound2_played = false
 function love.draw()
+	if pause == false then
 	if hit_timer == 0 then
-	--if pause == false then
 	panimation_update = panimation_update + 0.1
 	--animate player with noise
 	if dir[1] ~= 0 or dir[2] ~= 0 then
@@ -309,6 +319,7 @@ function love.draw()
 			
 			if hit_timer < 3 and hit_timer > 2 then
 				sound2_played = false
+				sound_1played = false
 				dir[1] = cycling_table[math.random(1,4)][1]
 				dir[2] = cycling_table[math.random(1,4)][2]
 			end
@@ -394,8 +405,8 @@ function love.draw()
 	end
 
 	love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 10)
-	--else
-	--	local width, height, flags = love.window.getMode( )
-	--	love.graphics.draw(tileset.pause, (width/2)-64, (height/2)-16)
-	--end
+	else
+		local width, height, flags = love.window.getMode( )
+		love.graphics.draw(tileset.pause, (width/2)-64, (height/2)-16)
+	end
 end
