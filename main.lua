@@ -32,9 +32,12 @@ function love.load()
 	dirbuffer={0,0}
 		
 	panimation_update = 0
+	
+	pause = false
 end
 
 function love.update(dt)
+	if pause == false then
 	if lives > 0 then
 		if poweruptimer > 0 then
 			poweruptimer = poweruptimer - dt
@@ -50,6 +53,7 @@ function love.update(dt)
 		player_move()
 	else
 		love.event.quit()
+	end
 	end
 end
 
@@ -146,6 +150,9 @@ function love.keypressed(key)
 	if key == 'f6' then
 		calculate_game_scale(mapsize)
 	end
+	if key == "space" then
+		pause = not pause
+	end
 end
 
 function ai_pathfind()
@@ -191,16 +198,7 @@ end
 function ai_move()
 	for dnumber,position in pairs(demons) do
 		if position[1] ~= -1 and position[2] ~= -1 and demons[dnumber].pos[1] == demons[dnumber].realpos[1] and demons[dnumber].pos[2] == demons[dnumber].realpos[2] then
-			--reset the float
-			--demons[dnumber].pos[1] = math.floor(demons[dnumber].pos[1])
-			--demons[dnumber].pos[2] = math.floor(demons[dnumber].pos[2])
-			--remember old value
-			--demons[dnumber].realpos[1] = math.floor(demons[dnumber].pos[1])
-			--demons[dnumber].realpos[2] = math.floor(demons[dnumber].pos[2])
-			local aiolddir1 = demons[dnumber].dir[1]
-			local aiolddir2 = demons[dnumber].dir[2]
-			
-			
+		
 			--move randomly if no path
 			if poweruptimer > 0 then   -----------------------here
 				local z = math.random(1,2)
@@ -232,12 +230,20 @@ function ai_move()
 		demons[dnumber].pos[2] = demons[dnumber].pos[2] + (demons[dnumber].dir[2]/16)
 		demons[dnumber].realpos[1] = math.floor(demons[dnumber].pos[1])
 		demons[dnumber].realpos[2] = math.floor(demons[dnumber].pos[2])
+		
+		--check if collided with player
+		local diff = {pos[1]-demons[dnumber].pos[1],pos[2]-demons[dnumber].pos[2]}
+		print(dump(diff[1]))
+		if diff[1] > -0.7 then
+			print("poop")
+		end
 	end
 	
 end
 
 local mouth = false
 function love.draw()
+	if pause == false then
 	panimation_update = panimation_update + 0.1
 	--animate player with noise
 	if dir[1] ~= 0 or dir[2] ~= 0 then
@@ -322,4 +328,8 @@ function love.draw()
 	end
 
 	love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 10)
+	else
+		local width, height, flags = love.window.getMode( )
+		love.graphics.draw(tileset.pause, (width/2)-64, (height/2)-16)
+	end
 end
