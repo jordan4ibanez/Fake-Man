@@ -91,13 +91,15 @@ function player_move()
 					dir = olddir
 				end
 			end
-		elseif map[pos[2]][pos[1]] == 2 then --collect points
-			map[pos[2]][pos[1]] = 0 	
+		end
+		if map[realpos[2]][realpos[1]] == 2 then --collect points
+			map[realpos[2]][realpos[1]] = 0 	
 			score = score + 100
-		elseif map[pos[2]][pos[1]] == 3 then --power up
+		end
+		if map[realpos[2]][realpos[1]] == 3 then --power up
 			pickup:play()
 			poweruptimer = 5
-			map[pos[2]][pos[1]] = 0 
+			map[realpos[2]][realpos[1]] = 0 
 		end
 
 		for dnumber,data in pairs(demons) do
@@ -204,7 +206,7 @@ function ai_move()
 				local z = math.random(1,2)
 				demons[dnumber].dir = {0,0}
 				demons[dnumber].dir[z] = math.random(-1,1)
-				print(demons[dnumber].dir[z])
+				--print(demons[dnumber].dir[z])
 				--return to old pos "wall detection"
 				if demons[dnumber].pos[1] + demons[dnumber].dir[1] < 1 or demons[dnumber].pos[2] + demons[dnumber].dir[2] < 1 or demons[dnumber].pos[1] + demons[dnumber].dir[1] > mapsize or demons[dnumber].pos[2] + demons[dnumber].dir[2] > mapsize or map[demons[dnumber].pos[2] + demons[dnumber].dir[2]][demons[dnumber].pos[1] + demons[dnumber].dir[1]] == 1 then
 					demons[dnumber].dir[1] = 0
