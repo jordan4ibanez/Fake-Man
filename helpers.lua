@@ -1,3 +1,4 @@
+--helps read tables
 function dump(o)
    if type(o) == 'table' then
       local s = '{ '
@@ -11,6 +12,7 @@ function dump(o)
    end
 end
 
+--generate a random map
 function map_generate()
 	map = {}
 
@@ -39,4 +41,28 @@ function map_generate()
 	for i = 1,demonnumber do
 		demons[i] = {math.random(1,mapsize),math.random(1,mapsize),path={}}
 	end
+end
+
+
+--automate loading textures
+function load_textures()
+	tileset = {}
+	local test = love.filesystem.getDirectoryItems("textures")
+	for test,texture in ipairs(test) do
+		tileset[string.gsub(texture, ".png", "")] = love.graphics.newImage("textures/"..texture)
+	end
+end
+
+--rescales the map
+function calculate_game_scale(mapsize1)
+	local width, height, flags = love.window.getMode( )
+
+	mapsize1 = mapsize1 + 1
+	if height>=width then
+		tilesize = width/mapsize1
+	else
+		tilesize = height/mapsize1
+	end
+	scale = tilesize / 32
+	return({tilesize,scale})
 end

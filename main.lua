@@ -1,21 +1,6 @@
 --flip x and y when generating map to fix all other values ( x is first, which isn't correct for indexing, it should be y)
 
 --try a smooth movement
-
---name tiles 1,2,3,4, etc and then load it all in a loop, add new tiles onto the numbers to save lines of code, add the imgs into tile table then when rendering do love.draw[number] to easy render from tileset
-function calculate_game_scale(mapsize1)
-	local width, height, flags = love.window.getMode( )
-
-	mapsize1 = mapsize1 + 1
-	if height>=width then
-		tilesize = width/mapsize1
-	else
-		tilesize = height/mapsize1
-	end
-	scale = tilesize / 32
-	return({tilesize,scale})
-end
-
 function love.load()
 	love.window.setMode(800, 600, {resizable=true, vsync=false, minwidth=400, minheight=300})
 
@@ -24,13 +9,8 @@ function love.load()
 	require("helpers")
 	math.randomseed( os.time() )
 	score = 0
-	tile = love.graphics.newImage("textures/tile.png")
-	player = love.graphics.newImage("textures/player.png")
-	powerman = love.graphics.newImage("textures/powerman.png")
-	point = love.graphics.newImage("textures/point.png")
-	ai = love.graphics.newImage("textures/ai.png")
-	powerup = love.graphics.newImage("textures/powerup.png")
-	pathmarker = love.graphics.newImage("textures/path.png")
+	
+	load_textures()
 
 	poweruptimer = 0
 	lives = 10
@@ -226,11 +206,11 @@ function love.draw()
 	for x=1,mapsize do
 	for y=1,mapsize do
 		if map[x][y] == 1 then
-			love.graphics.draw(tile, y*tilesize, x*tilesize,0,scale,scale)
+			love.graphics.draw(tileset.tile, y*tilesize, x*tilesize,0,scale,scale)
 		elseif map[x][y] == 2 then
-			love.graphics.draw(point, y*tilesize, x*tilesize,0,scale,scale)
+			love.graphics.draw(tileset.point, y*tilesize, x*tilesize,0,scale,scale)
 		elseif map[x][y] == 3 then
-			love.graphics.draw(powerup, y*tilesize, x*tilesize,0,scale,scale)
+			love.graphics.draw(tileset.powerup, y*tilesize, x*tilesize,0,scale,scale)
 		end
 	end
 	end
@@ -242,7 +222,7 @@ function love.draw()
 			--draw path
 			--if type(data.path) == "table" then
 			--	for count, node in ipairs(data.path) do
-			--		love.graphics.draw(pathmarker, node[1]*tilesize, node[2]*tilesize,0,scale,scale)
+			--		love.graphics.draw(tileset.pathmarker, node[1]*tilesize, node[2]*tilesize,0,scale,scale)
 			--	end
 			--end
 			--print(data[1])
@@ -253,7 +233,7 @@ function love.draw()
 			if data[1] and data[2] then
 				--don't draw if "dead"
 				if data[1] ~= -1 and data[2] ~= -1 then
-					love.graphics.draw(ai, data[1]*tilesize, data[2]*tilesize,0,scale,scale)
+					love.graphics.draw(tileset.ai, data[1]*tilesize, data[2]*tilesize,0,scale,scale)
 				end
 			end
 		end
@@ -278,9 +258,9 @@ function love.draw()
 		size4 = 0
 	end
 	if poweruptimer == 0 then
-		love.graphics.draw(player, pos[1]*tilesize+size3+size0, pos[2]*tilesize+size4,size2,scale*size1,scale)
+		love.graphics.draw(tileset.player, pos[1]*tilesize+size3+size0, pos[2]*tilesize+size4,size2,scale*size1,scale)
 	else
-		love.graphics.draw(powerman, pos[1]*tilesize+size3+size0, pos[2]*tilesize+size4,size2,scale*size1,scale)
+		love.graphics.draw(tileset.powerman, pos[1]*tilesize+size3+size0, pos[2]*tilesize+size4,size2,scale*size1,scale)
 	end
 
 end
