@@ -1,6 +1,9 @@
 --flip x and y when generating map to fix all other values ( x is first, which isn't correct for indexing, it should be y)
 
 --try a smooth movement
+
+--animate mouth
+
 function love.load()
 	love.window.setMode(800, 600, {resizable=true, vsync=false, minwidth=400, minheight=300})
 
@@ -198,11 +201,13 @@ end
 
 function love.draw()
 	calculate_game_scale(mapsize)
+	
 	love.graphics.print("SCORE: "..score, 0, 0)
 	if poweruptimer > 0 then
 		love.graphics.print("POWER: "..poweruptimer, 300, 0)
 	end
 	love.graphics.print("LIVES: "..lives, 600,0)
+	--render map
 	for x=1,mapsize do
 	for y=1,mapsize do
 		if map[x][y] == 1 then
@@ -215,6 +220,7 @@ function love.draw()
 	end
 	end
 	
+	--draw ai
 	for dnumber,data in pairs(demons) do
 		if data[1] ~= -1 and data[2] ~= -1 then
 			--this is debug
