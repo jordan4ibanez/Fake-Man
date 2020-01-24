@@ -4,6 +4,8 @@
 
 --animate mouth
 
+--optimize pos[1] pos[2] into pos = {1,2}
+
 function love.load()
 	love.window.setMode(800, 600, {resizable=true, vsync=false, minwidth=400, minheight=300})
 
@@ -26,6 +28,8 @@ function love.load()
 	map_generate()
 		
 	dir = {0,0}
+	dirbuffer={0,0}
+	
 	gamespeed = 0.2
 	
 	aiupdate = 0
@@ -61,57 +65,73 @@ end
 
 function player_move()
 	local oldpos1 = pos[1]
-	local oldpos2 = pos[2]
-	pos[1] = pos[1] + dir[1]
-	pos[2] = pos[2] + dir[2]
-	--map limit
-	if pos[1] < 1 or pos[2] < 1 or pos[1] > mapsize or pos[2] > mapsize then
-		pos[1] = oldpos1
-		pos[2] = oldpos2
-	end
-	if map[pos[2]][pos[1]] == 1 and poweruptimer == 0 then
-		pos[1] = oldpos1
-		pos[2] = oldpos2
-	elseif map[pos[2]][pos[1]] == 1 and poweruptimer ~= 0 then
-		map[pos[2]][pos[1]] = 0
-		score = score + 1000
-	elseif map[pos[2]][pos[1]] == 2 then --collect points
-		map[pos[2]][pos[1]] = 0 	
-		score = score + 100
-	elseif map[pos[2]][pos[1]] == 3 then --power up
-		poweruptimer = 5
-		map[pos[2]][pos[1]] = 0 
-	end
-
-	for dnumber,data in pairs(demons) do
-		if data[1] and data[2] and data[1] ~= -1 and data[2] ~= -1 then
-			if data[1] == pos[1] and data[2] == pos[2] then
-				if poweruptimer == 0 then
-					--lives = lives - 1
-					--pos[1] = math.random(1,mapsize)
-					--pos[2] = math.random(1,mapsize)
+	local oldpos2 = pos[2]	
+	
+	--check everything when on center of map section
+	if pos[1] == realpos[1] and pos[2] == realpos[2] then
+		local olddir = {0,0}
+		if dirbuffer then
+			olddir = {dir[1],dir[2]}
+			dir = dirbuffer
+		end
+		--map limit
+		if pos[1] + dir[1] < 1 or pos[2] + dir[2] < 1 or pos[1] + dir[1] > mapsize or pos[2] + dir[2] > mapsize then
+			dir = {0,0}
+		end
+		
+		if map[pos[2]+dir[2]][pos[1]+dir[1]] == 1 then
+			if not dirbuffer then --regular stop
+				dir = {0,0}
+			end
+			if dirbuffer and map[pos[2]+dirbuffer[2]][pos[1]+dirbuffer[1]] == 1 then
+				if map[pos[2]+olddir[2]][pos[1]+olddir[1]] == 1 then
+					dir = {0,0}
 				else
-					demons[dnumber][1] = -1
-					demons[dnumber][2] = -1
+					dir = olddir
+				end
+			end
+		elseif map[pos[2]][pos[1]] == 2 then --collect points
+			map[pos[2]][pos[1]] = 0 	
+			score = score + 100
+		elseif map[pos[2]][pos[1]] == 3 then --power up
+			poweruptimer = 5
+			map[pos[2]][pos[1]] = 0 
+		end
+
+		for dnumber,data in pairs(demons) do
+			if data[1] and data[2] and data[1] ~= -1 and data[2] ~= -1 then
+				if data[1] == pos[1] and data[2] == pos[2] then
+					if poweruptimer == 0 then
+						--lives = lives - 1
+						--pos[1] = math.random(1,mapsize)
+						--pos[2] = math.random(1,mapsize)
+					else
+						demons[dnumber][1] = -1
+						demons[dnumber][2] = -1
+					end
 				end
 			end
 		end
 	end
+	
+	pos[1] = pos[1] + (dir[1]/2)
+	pos[2] = pos[2] + (dir[2]/2)
+	realpos = {math.floor(pos[1]),math.floor(pos[2])}
 end
 
 --player input
 function love.keypressed(key)
 	local oldpos1 = pos[1]
 	local oldpos2 = pos[2]
-	
+	--temporarily store the direction to do collision checks
 	if key == 'up' then
-		dir={0,-1}
+		dirbuffer={0,-1}
 	elseif key == 'down' then
-		dir={0,1}
+		dirbuffer={0,1}
 	elseif key == 'left' then
-		dir={-1,0}
+		dirbuffer={-1,0}
 	elseif key == 'right' then
-		dir={1,0}
+		dirbuffer={1,0}
 	end
 	if key == 'escape' then
 		love.event.quit()
@@ -145,7 +165,7 @@ function ai_pathfind()
 				
 				-- Define start and goal locations coordinates
 				local startx, starty = data[1],data[2]
-				local endx, endy = pos[1],pos[2]
+				local endx, endy = realpos[1],realpos[2]
 
 				-- Calculates the path, and its length
 				local path = myFinder:getPath(startx, starty, endx, endy)
@@ -272,5 +292,5 @@ function love.draw()
 	else
 		love.graphics.draw(tileset.powerman, pos[1]*tilesize+size3+size0, pos[2]*tilesize+size4,size2,scale*size1,scale)
 	end
-
+	love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 10)
 end

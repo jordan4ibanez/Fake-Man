@@ -34,6 +34,7 @@ function map_generate()
 	
 	--reset players position for debug
 	pos = {math.random(1,mapsize),math.random(1,mapsize)}
+	realpos = {math.floor(pos[1]),math.floor(pos[2])}
 	
 	--generate demons here for debug
 	demons = {}
