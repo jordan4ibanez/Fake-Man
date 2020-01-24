@@ -30,16 +30,12 @@ function love.load()
 		
 	dir = {0,0}
 	dirbuffer={0,0}
-	
-	gamespeed = 0.2
-	
-	aiupdate = 0
+		
 	panimation_update = 0
 end
 
 function love.update(dt)
 	if lives > 0 then
-		aiupdate = aiupdate + dt
 		if poweruptimer > 0 then
 			poweruptimer = poweruptimer - dt
 			if poweruptimer < 0 then
@@ -47,11 +43,9 @@ function love.update(dt)
 			end
 		end
 		--move the demons
-		if aiupdate > gamespeed then
-			ai_pathfind()
-			ai_move()
-			aiupdate = 0
-		end
+		ai_pathfind()
+		ai_move()
+
 		--move the player
 		player_move()
 	else
@@ -60,12 +54,11 @@ function love.update(dt)
 end
 
 
-function player_move()
-	local oldpos1 = pos[1]
-	local oldpos2 = pos[2]	
-	
+function player_move()	
 	--check everything when on center of map section
 	if pos[1] == realpos[1] and pos[2] == realpos[2] then
+		pos[1] = math.floor(pos[1])
+		pos[2] = math.floor(pos[2])
 		local olddir = {0,0}
 		if dirbuffer then
 			olddir = {dir[1],dir[2]}
@@ -155,7 +148,7 @@ end
 
 function ai_pathfind()
 	for dnumber,data in pairs(demons) do
-		if data[1] and data[2] and data[1] ~= -1 and data[2] ~= -1 then
+		if data.realpos[1] and data.realpos[2] and data.realpos[1] ~= -1 and data.realpos[2] ~= -1 then
 			--delete path to save calculations
 			if poweruptimer > 0 then
 				demons[dnumber].path = {}
@@ -173,7 +166,7 @@ function ai_pathfind()
 				myFinder:setMode('ORTHOGONAL')
 				
 				-- Define start and goal locations coordinates
-				local startx, starty = data[1],data[2]
+				local startx, starty = math.floor(data.realpos[1]),math.floor(data.realpos[2])
 				local endx, endy = realpos[1],realpos[2]
 
 				-- Calculates the path, and its length
@@ -195,40 +188,50 @@ end
 --this controls the actual "ai" of the demons
 function ai_move()
 	for dnumber,position in pairs(demons) do
-		if position[1] ~= -1 and position[2] ~= -1 then
+		if position[1] ~= -1 and position[2] ~= -1 and demons[dnumber].pos[1] == demons[dnumber].realpos[1] and demons[dnumber].pos[2] == demons[dnumber].realpos[2] then
+			--reset the float
+			--demons[dnumber].pos[1] = math.floor(demons[dnumber].pos[1])
+			--demons[dnumber].pos[2] = math.floor(demons[dnumber].pos[2])
 			--remember old value
-			local aioldpos1 = demons[dnumber][1]
-			local aioldpos2 = demons[dnumber][2] 
+			--demons[dnumber].realpos[1] = math.floor(demons[dnumber].pos[1])
+			--demons[dnumber].realpos[2] = math.floor(demons[dnumber].pos[2])
+			local aiolddir1 = demons[dnumber].dir[1]
+			local aiolddir2 = demons[dnumber].dir[2]
 			
 			
 			--move randomly if no path
-			if poweruptimer > 0 then
+			if poweruptimer > 0 then   -----------------------here
 				local z = math.random(1,2)
-				demons[dnumber][z] = demons[dnumber][z] + math.random(-1,1)
-						
+				demons[dnumber].dir = {0,0}
+				demons[dnumber].dir[z] = math.random(-1,1)
+				print(demons[dnumber].dir[z])
 				--return to old pos "wall detection"
-				if demons[dnumber][1] < 1 or demons[dnumber][2]< 1 or demons[dnumber][1] > mapsize or demons[dnumber][2] > mapsize or map[demons[dnumber][2]][demons[dnumber][1]] == 1 then
-					demons[dnumber][1] = aioldpos1
-					demons[dnumber][2] = aioldpos2
+				if demons[dnumber].pos[1] + demons[dnumber].dir[1] < 1 or demons[dnumber].pos[2] + demons[dnumber].dir[2] < 1 or demons[dnumber].pos[1] + demons[dnumber].dir[1] > mapsize or demons[dnumber].pos[2] + demons[dnumber].dir[2] > mapsize or map[demons[dnumber].pos[2] + demons[dnumber].dir[2]][demons[dnumber].pos[1] + demons[dnumber].dir[1]] == 1 then
+					demons[dnumber].dir[1] = 0
+					demons[dnumber].dir[2] = 0
 				end
 			
-			elseif type(position.path) == "table" then
+			elseif type(position.path) == "table" and table.getn(position.path) > 0 then
 				--print(dump(position.path[2]))
-				demons[dnumber][1] = position.path[2][1]
-				demons[dnumber][2] = position.path[2][2]		
-				--table.remove (position.path, 1)
+				demons[dnumber].dir[1] = position.path[2][1]-demons[dnumber].pos[1]
+				demons[dnumber].dir[2] = position.path[2][2]-demons[dnumber].pos[2]
 			end
 			--stops ghosts from stacking in same position
-			for ynumber,yposition in pairs(demons) do
-				if yposition[1] ~= -1 and yposition[2] ~= -1 and dnumber ~= ynumber then --don't check self
-					if demons[dnumber][1] == demons[ynumber][1] and demons[dnumber][2] == demons[ynumber][2] then
-						demons[dnumber][1] = aioldpos1
-						demons[dnumber][2] = aioldpos2
-					end
-				end
-			end
+			--for ynumber,yposition in pairs(demons) do
+			--	if yposition[1] ~= -1 and yposition[2] ~= -1 and dnumber ~= ynumber then --don't check self
+			--		if demons[dnumber][1] == demons[ynumber][1] and demons[dnumber][2] == demons[ynumber][2] then
+			--			demons[dnumber][1] = aioldpos1
+			--			demons[dnumber][2] = aioldpos2
+			--		end
+			--	end
+			--end
 		end
+		demons[dnumber].pos[1] = demons[dnumber].pos[1] + (demons[dnumber].dir[1]/16)
+		demons[dnumber].pos[2] = demons[dnumber].pos[2] + (demons[dnumber].dir[2]/16)
+		demons[dnumber].realpos[1] = math.floor(demons[dnumber].pos[1])
+		demons[dnumber].realpos[2] = math.floor(demons[dnumber].pos[2])
 	end
+	
 end
 
 local mouth = false
@@ -268,23 +271,22 @@ function love.draw()
 			--this is debug
 			--print(dump(data.path))
 			--draw path
-			--if type(data.path) == "table" then
-			--	for count, node in ipairs(data.path) do
-			--		love.graphics.draw(tileset.pathmarker, node[1]*tilesize, node[2]*tilesize,0,scale,scale)
-			--	end
-			--end
+			if type(data.path) == "table" then
+				for count, node in ipairs(data.path) do
+					love.graphics.draw(tileset.path, node[1]*tilesize, node[2]*tilesize,0,scale,scale)
+				end
+			end
 			--print(data[1])
 			--print(data[2])
 			--print(data[1].."|"..data[2])
 			
-			
-			if data[1] and data[2] then
+			if data.pos[1] and data.pos[2] then
 				--don't draw if "dead"
-				if data[1] ~= -1 and data[2] ~= -1 then
+				if data.pos[1] ~= -1 and data.pos[2] ~= -1 then
 					if poweruptimer == 0 then
-						love.graphics.draw(tileset.ai, data[1]*tilesize, data[2]*tilesize,0,scale,scale)
+						love.graphics.draw(tileset.ai, data.pos[1]*tilesize, data.pos[2]*tilesize,0,scale,scale)
 					else
-						love.graphics.draw(tileset.aiscared, data[1]*tilesize, data[2]*tilesize,0,scale,scale)
+						love.graphics.draw(tileset.aiscared, data.pos[1]*tilesize, data.pos[2]*tilesize,0,scale,scale)
 					end
 				end
 			end

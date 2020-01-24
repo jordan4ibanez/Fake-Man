@@ -38,9 +38,10 @@ function map_generate()
 	
 	--generate demons here for debug
 	demons = {}
-	demonnumber = 9
+	demonnumber = 1
 	for i = 1,demonnumber do
-		demons[i] = {math.random(1,mapsize),math.random(1,mapsize),path={}}
+		local dpos = {math.random(1,mapsize),math.random(1,mapsize)}
+		demons[i] = {pos={dpos[1],dpos[2]},path={},realpos={dpos[1],dpos[2]},dir={0,0}} --change [1] [2] to pos = {1,2}
 	end
 end
 
