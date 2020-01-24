@@ -1,13 +1,13 @@
---flip x and y when generating map to fix all other values ( x is first, which isn't correct for indexing, it should be y)
-
---try a smooth movement
-
-
 --optimize pos[1] pos[2] into pos = {1,2}
+
+--add in counter to count how many pellets and list on screen then put 
+
+--make ghosts respawn
 
 function love.load()
 	love.window.setMode(800, 600, {resizable=true, vsync=true, minwidth=400, minheight=300})
 
+	
 	Grid = require ("jumper.grid") -- The grid class
 	Pathfinder = require ("jumper.pathfinder") -- The pathfinder class
 	require("helpers")
@@ -17,6 +17,9 @@ function love.load()
 	load_textures()
 	movementsound = love.audio.newSource("sounds/move1.ogg", "static")
 	pickup = love.audio.newSource("sounds/pickup.ogg", "static")
+	die = love.audio.newSource("sounds/die.ogg", "static")
+	new = love.audio.newSource("sounds/new.ogg", "static")
+	scrambled = love.audio.newSource("sounds/scrambled.ogg", "static")
 
 	poweruptimer = 0
 	lives = 10
@@ -34,10 +37,13 @@ function love.load()
 	panimation_update = 0
 	
 	pause = false
+	
+	hit_timer = 0 --this is used for when the player gets hit by demon
 end
 
 function love.update(dt)
 	if pause == false then
+	if hit_timer == 0 then
 	if lives > 0 then
 		if poweruptimer > 0 then
 			poweruptimer = poweruptimer - dt
@@ -53,6 +59,12 @@ function love.update(dt)
 		player_move()
 	else
 		love.event.quit()
+	end
+	else
+		hit_timer = hit_timer - dt
+		if hit_timer <= 0 then
+			hit_timer = 0
+		end
 	end
 	end
 end
@@ -233,17 +245,24 @@ function ai_move()
 		
 		--check if collided with player
 		local diff = {pos[1]-demons[dnumber].pos[1],pos[2]-demons[dnumber].pos[2]}
-		print(dump(diff[1]))
-		if diff[1] > -0.7 then
-			print("poop")
+		--print(dump(diff[1]))
+		if diff[1] >= -0.9375 and diff[1] <= 0.9375 and diff[2] >= -0.9375 and diff[2] <= 0.9375 then
+			hit_timer = 10
+			die:play()
 		end
 	end
 	
 end
 
 local mouth = false
+local cycle_timer = 0
+local cycle_stage = 2
+local cycling_table = {{-1,0},{0,-1},{1,0},{0,1}}
+local sound_played = false
+local sound2_played = false
 function love.draw()
-	if pause == false then
+	if hit_timer == 0 then
+	--if pause == false then
 	panimation_update = panimation_update + 0.1
 	--animate player with noise
 	if dir[1] ~= 0 or dir[2] ~= 0 then
@@ -253,6 +272,51 @@ function love.draw()
 		panimation_update = 0
 	end
 	end
+	--the death animation
+	else
+		
+		
+		mouth = false
+		if hit_timer > 6.6 then
+			cycle_timer = cycle_timer + 0.1
+			if cycle_timer >= 0.25 then
+				cycle_timer = 0
+				cycle_stage = cycle_stage + 1
+				if cycle_stage > 4 then
+					cycle_stage = 1
+				end
+				dir[1] = cycling_table[cycle_stage][1]
+				dir[2] = cycling_table[cycle_stage][2]
+			end
+		else
+			--it's a long sequence
+			if hit_timer <= 5.2 and hit_timer > 4.5 and sound_played == false then
+				new:play()
+				sound_played = true
+			end
+			dir[1] = cycling_table[3][1]
+			dir[2] = cycling_table[3][2]
+			
+			if hit_timer < 4.5 then
+				map_generate()
+				sound_played = false
+			end
+			
+			if hit_timer < 4.5 and hit_timer > 4 and sound2_played == false then
+				scrambled:play()
+				sound2_played = true
+			end
+			
+			if hit_timer < 3 and hit_timer > 2 then
+				sound2_played = false
+				dir[1] = cycling_table[math.random(1,4)][1]
+				dir[2] = cycling_table[math.random(1,4)][2]
+			end
+			
+			
+		end
+	end
+	
 	calculate_game_scale(mapsize)
 	
 	love.graphics.print("SCORE: "..score, 0, 0)
@@ -274,6 +338,7 @@ function love.draw()
 	end
 	
 	--draw ai
+	if hit_timer == 0 then
 	for dnumber,data in pairs(demons) do
 		if data[1] ~= -1 and data[2] ~= -1 then
 			--this is debug
@@ -299,6 +364,7 @@ function love.draw()
 				end
 			end
 		end
+	end
 	end
 	
 	--fix flipping image to other tile
@@ -328,8 +394,8 @@ function love.draw()
 	end
 
 	love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 10)
-	else
-		local width, height, flags = love.window.getMode( )
-		love.graphics.draw(tileset.pause, (width/2)-64, (height/2)-16)
-	end
+	--else
+	--	local width, height, flags = love.window.getMode( )
+	--	love.graphics.draw(tileset.pause, (width/2)-64, (height/2)-16)
+	--end
 end
