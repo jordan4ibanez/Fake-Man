@@ -15,6 +15,8 @@ end
 --generate a random map
 function map_generate()
 	map = {}
+	
+	pellets = 0
 
 	for x = 1,mapsize do
 	map[x]={}
@@ -25,6 +27,7 @@ function map_generate()
 			map[x][y] = 1
 		else
 			map[x][y]= 2
+			pellets = pellets + 1
 		end
 		if perlin >= 0.9 then
 			map[x][y] = 3
@@ -36,10 +39,16 @@ function map_generate()
 	for x = 1,mapsize do
 	for y = 1,mapsize do
 		if (x == 1 or x == mapsize) or (y == 1 or y == mapsize) then
+			--count down number of pellets when destroyed
+			if map[x][y] == 2 then
+				pellets = pellets - 1
+			end
 			map[x][y]=1
 		end
 	end
 	end
+	
+	pellets = math.floor(pellets*0.5)
 	
 	--reset players position for debug
 	pos = {math.random(2,mapsize-1),math.random(2,mapsize-1)}
@@ -47,7 +56,7 @@ function map_generate()
 	
 	--generate demons here for debug
 	demons = {}
-	demonnumber = 1
+	demonnumber = math.random(3,5)
 	for i = 1,demonnumber do
 		local dpos = {math.random(2,mapsize-1),math.random(2,mapsize-1)}
 		demons[i] = {pos={dpos[1],dpos[2]},path={},realpos={dpos[1],dpos[2]},dir={0,0}} --change [1] [2] to pos = {1,2}

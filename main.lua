@@ -21,6 +21,7 @@ function love.load()
 	new = love.audio.newSource("sounds/new.ogg", "static")
 	scrambled = love.audio.newSource("sounds/scrambled.ogg", "static")
 	enemy = love.audio.newSource("sounds/enemy.ogg", "static")
+	lose = love.audio.newSource("sounds/lose.ogg", "static")
 
 
 	poweruptimer = 0
@@ -41,31 +42,30 @@ function love.load()
 	pause = false
 	
 	hit_timer = 0 --this is used for when the player gets hit by demon
+	level = 1
 end
 
 function love.update(dt)
-	if pause == false then
-	if hit_timer == 0 then
 	if lives > 0 then
-		if poweruptimer > 0 then
-			poweruptimer = poweruptimer - dt
-			if poweruptimer < 0 then
-				poweruptimer = 0
+	if pause == false then
+		if hit_timer == 0 then
+			if poweruptimer > 0 then
+				poweruptimer = poweruptimer - dt
+				if poweruptimer < 0 then
+					poweruptimer = 0
+				end
 			end
-		end
-		--move the demons
-		ai_pathfind()
-		ai_move()
+			--move the demons
+			ai_pathfind()
+			ai_move()
 
-		--move the player
-		player_move()
-	else
-		love.event.quit()
-	end
-	else
-		hit_timer = hit_timer - dt
-		if hit_timer <= 0 then
-			hit_timer = 0
+			--move the player
+			player_move()
+		else
+			hit_timer = hit_timer - dt
+			if hit_timer <= 0 then
+				hit_timer = 0
+			end
 		end
 	end
 	end
@@ -113,6 +113,12 @@ function player_move()
 		if map[realpos[2]][realpos[1]] == 2 then --collect points
 			map[realpos[2]][realpos[1]] = 0 	
 			score = score + 100
+			pellets = pellets - 1
+			--next level
+			if pellets == 0 then
+				hit_timer = 5.5
+				level = level + 1
+			end
 		end
 		if map[realpos[2]][realpos[1]] == 3 then --power up
 			pickup:play()
@@ -120,20 +126,6 @@ function player_move()
 			map[realpos[2]][realpos[1]] = 0 
 		end
 
-		for dnumber,data in pairs(demons) do
-			if data[1] and data[2] and data[1] ~= -1 and data[2] ~= -1 then
-				if data[1] == pos[1] and data[2] == pos[2] then
-					if poweruptimer == 0 then
-						--lives = lives - 1
-						--pos[1] = math.random(1,mapsize)
-						--pos[2] = math.random(1,mapsize)
-					else
-						demons[dnumber][1] = -1
-						demons[dnumber][2] = -1
-					end
-				end
-			end
-		end
 	end
 	
 	pos[1] = pos[1] + (dir[1]/8)
@@ -257,6 +249,7 @@ function ai_move()
 				demons[dnumber].pos[1] = -1
 				demons[dnumber].pos[2] = -1
 				score = score + 10000
+				enemy:stop()
 				enemy:play()
 			end				
 		end
@@ -271,6 +264,7 @@ local cycling_table = {{-1,0},{0,-1},{1,0},{0,1}}
 local sound_played = false
 local sound2_played = false
 function love.draw()
+	if lives > 0 then
 	if pause == false then
 	if hit_timer == 0 then
 	panimation_update = panimation_update + 0.1
@@ -355,11 +349,11 @@ function love.draw()
 			--this is debug
 			--print(dump(data.path))
 			--draw path
-			if type(data.path) == "table" then
-				for count, node in ipairs(data.path) do
-					love.graphics.draw(tileset.path, node[1]*tilesize, node[2]*tilesize,0,scale,scale)
-				end
-			end
+			--if type(data.path) == "table" then
+			--	for count, node in ipairs(data.path) do
+			--		love.graphics.draw(tileset.path, node[1]*tilesize, node[2]*tilesize,0,scale,scale)
+			--	end
+			--end
 			--print(data[1])
 			--print(data[2])
 			--print(data[1].."|"..data[2])
@@ -405,8 +399,16 @@ function love.draw()
 	end
 
 	love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 10)
+	love.graphics.print("Pellets Remaining: "..tostring(pellets), 200, 10)
+	love.graphics.print("Level: "..tostring(level), 400, 10)
 	else
 		local width, height, flags = love.window.getMode( )
 		love.graphics.draw(tileset.pause, (width/2)-64, (height/2)-16)
+	end
+	else
+		--game over - extra annoying
+		local width, height, flags = love.window.getMode( )
+		love.graphics.draw(tileset.gameover, (width/2)-64, (height/2)-16)
+		lose:play()
 	end
 end
