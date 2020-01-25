@@ -1,3 +1,5 @@
+--create quadrants (maybe 4-8) and build the map made of that
+
 --optimize pos[1] pos[2] into pos = {1,2}
 
 --add in counter to count how many pellets and list on screen then put 
