@@ -75,8 +75,14 @@ end
 
 
 function player_move()	
+
+	--add this to be a "speed buffer" so that the player doesn't go off center of the tiles
+	local speedbuffer = 8
 	--check everything when on center of map section
 	if pos[1] == realpos[1] and pos[2] == realpos[2] then
+		if poweruptimer > 0 then
+			speedbuffer = 4
+		end
 		pos[1] = math.floor(pos[1])
 		pos[2] = math.floor(pos[2])
 		local olddir = {0,0}
@@ -130,8 +136,8 @@ function player_move()
 
 	end
 	
-	pos[1] = pos[1] + (dir[1]/8)
-	pos[2] = pos[2] + (dir[2]/8)
+	pos[1] = pos[1] + (dir[1]/speedbuffer)
+	pos[2] = pos[2] + (dir[2]/speedbuffer)
 	realpos = {math.floor(pos[1]),math.floor(pos[2])}
 end
 
