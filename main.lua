@@ -4,6 +4,9 @@
 
 --make ghosts respawn
 
+--change keypressed to check always and add controller support
+
+--make ghosts keep moving in direction until stopped by wall when powered up
 
 
 function love.load()
@@ -12,6 +15,7 @@ function love.load()
 	
 	Grid = require ("jumper.grid") -- The grid class
 	Pathfinder = require ("jumper.pathfinder") -- The pathfinder class
+	require("maps")
 	require("helpers")
 	math.randomseed( os.time() )
 	score = 0
@@ -26,10 +30,10 @@ function love.load()
 	lose = love.audio.newSource("sounds/lose.ogg", "static")
 
 
-	poweruptimer = 1000
+	poweruptimer = 0
 	lives = 10
 
-	mapsize = 20
+	mapsize = 21 --make this odd
 	tilesize = 12
 	scale = tilesize / 32
 	
@@ -59,7 +63,7 @@ function love.update(dt)
 				end
 			end
 			--move the demons
-			ai_move()
+			ai_move(dt)
 
 			--move the player
 			player_move()
@@ -106,15 +110,15 @@ function player_move()
 			end
 		end
 		
-		if map[pos[2]+dir[2]][pos[1]+dir[1]] == 1 then
+		if collide(map[pos[2]+dir[2]][pos[1]+dir[1]]) then
 		
 			if not dirbuffer then --regular stop
 				dir = {0,0}
 			end
 							
-			if dirbuffer and map[pos[2]+dirbuffer[2]][pos[1]+dirbuffer[1]] == 1 then
+			if dirbuffer and collide(map[pos[2]+dirbuffer[2]][pos[1]+dirbuffer[1]]) then
 				--try to hold buffer
-				if map[pos[2]+olddir[2]][pos[1]+olddir[1]] == 1 then
+				if collide(map[pos[2]+olddir[2]][pos[1]+olddir[1]]) then
 					dir = {0,0}
 				else
 					dir = olddir
@@ -139,7 +143,6 @@ function player_move()
 
 	end
 	
-	print(speedbuffer)
 	pos[1] = pos[1] + (dir[1]/speedbuffer)
 	pos[2] = pos[2] + (dir[2]/speedbuffer)
 	realpos = {math.floor(pos[1]),math.floor(pos[2])}
@@ -167,6 +170,7 @@ function love.keypressed(key)
 	end
 	if key == 'f5' then
 		map_generate()
+		hit_timer = 0
 	end
 	if key == 'f6' then
 		calculate_game_scale(mapsize)
@@ -182,7 +186,7 @@ function ai_pathfind()
 	local dnumber = ai_step
 	local data = demons[dnumber]
 	
-	if data.realpos[1] and data.realpos[2] and data.realpos[1] ~= -1 and data.realpos[2] ~= -1 then
+	if data and data.realpos[1] and data.realpos[2] and data.realpos[1] ~= -1 and data.realpos[2] ~= -1 then
 		--delete path to save calculations
 		if poweruptimer > 0 then
 			demons[dnumber].path = {}
@@ -193,7 +197,8 @@ function ai_pathfind()
 			local grid = Grid(map) 
 			-- Creates a pathfinder object using Jump Point Search
 			
-			local walkable = function(v) return v~=1 end
+			local walkable = function(v)
+				if v == 1 or v == 4 then return(false) else return(true) end end
 			
 			local myFinder = Pathfinder(grid, 'ASTAR', walkable)
 
@@ -225,9 +230,13 @@ function ai_pathfind()
 end
 
 --this controls the actual "ai" of the demons
-function ai_move()
+function ai_move(dt)
 	for dnumber,position in pairs(demons) do
-		if position[1] ~= -1 and position[2] ~= -1 and demons[dnumber].pos[1] == demons[dnumber].realpos[1] and demons[dnumber].pos[2] == demons[dnumber].realpos[2] then
+		if demons[dnumber].timer > 0 then
+			demons[dnumber].timer = demons[dnumber].timer - dt
+		end
+
+		if demons[dnumber].pos[1] == demons[dnumber].realpos[1] and demons[dnumber].pos[2] == demons[dnumber].realpos[2] then
 			ai_pathfind()
 			--move randomly if no path
 			if poweruptimer > 0 then   -----------------------here
@@ -236,42 +245,43 @@ function ai_move()
 				demons[dnumber].dir[z] = math.random(-1,1)
 				--print(demons[dnumber].dir[z])
 				--return to old pos "wall detection"
-				if demons[dnumber].pos[1] + demons[dnumber].dir[1] < 1 or demons[dnumber].pos[2] + demons[dnumber].dir[2] < 1 or demons[dnumber].pos[1] + demons[dnumber].dir[1] > mapsize or demons[dnumber].pos[2] + demons[dnumber].dir[2] > mapsize or map[demons[dnumber].pos[2] + demons[dnumber].dir[2]][demons[dnumber].pos[1] + demons[dnumber].dir[1]] == 1 then
+				if demons[dnumber].pos[1] + demons[dnumber].dir[1] < 1 or demons[dnumber].pos[2] + demons[dnumber].dir[2] < 1 or demons[dnumber].pos[1] + demons[dnumber].dir[1] > mapsize or demons[dnumber].pos[2] + demons[dnumber].dir[2] > mapsize or collide(map[demons[dnumber].pos[2] + demons[dnumber].dir[2]][demons[dnumber].pos[1] + demons[dnumber].dir[1]]) then
 					demons[dnumber].dir[1] = 0
 					demons[dnumber].dir[2] = 0
-				end
-			
+				end			
 			elseif type(position.path) == "table" and table.getn(position.path) > 0 then
 				--print(dump(position.path[2]))
 				demons[dnumber].dir[1] = position.path[2][1]-demons[dnumber].pos[1]
 				demons[dnumber].dir[2] = position.path[2][2]-demons[dnumber].pos[2]
 			end
-			--stops ghosts from stacking in same position
-			--for ynumber,yposition in pairs(demons) do
-			--	if yposition[1] ~= -1 and yposition[2] ~= -1 and dnumber ~= ynumber then --don't check self
-			--		if demons[dnumber][1] == demons[ynumber][1] and demons[dnumber][2] == demons[ynumber][2] then
-			--			demons[dnumber][1] = aioldpos1
-			--			demons[dnumber][2] = aioldpos2
-			--		end
-			--	end
-			--end
 		end
-		demons[dnumber].pos[1] = demons[dnumber].pos[1] + (demons[dnumber].dir[1]/16)
-		demons[dnumber].pos[2] = demons[dnumber].pos[2] + (demons[dnumber].dir[2]/16)
-		demons[dnumber].realpos[1] = math.floor(demons[dnumber].pos[1])
-		demons[dnumber].realpos[2] = math.floor(demons[dnumber].pos[2])
+		
+		
+		--do this here to prevent glitching (ai runs pathfinding in a loop, 1 after another every step to reserve cpu)
+		if demons[dnumber].timer <= 0 then
+			demons[dnumber].pos[1] = demons[dnumber].pos[1] + (demons[dnumber].dir[1]/16)
+			demons[dnumber].pos[2] = demons[dnumber].pos[2] + (demons[dnumber].dir[2]/16)
+			demons[dnumber].realpos[1] = math.floor(demons[dnumber].pos[1])
+			demons[dnumber].realpos[2] = math.floor(demons[dnumber].pos[2])
+	
+		end
 		
 		--check if collided with player
 		local diff = {pos[1]-demons[dnumber].pos[1],pos[2]-demons[dnumber].pos[2]}
 		--print(dump(diff[1]))
-		if diff[1] >= -0.9375 and diff[1] <= 0.9375 and diff[2] >= -0.9375 and diff[2] <= 0.9375 then
+		local hitbox = 0.9
+		if hit_timer == 0 and math.abs(diff[1]) <= hitbox and math.abs(diff[2]) <= hitbox then
+			local center = math.floor(mapsize/2)
 			if poweruptimer == 0 then
+				--print(dump(diff))
 				lives = lives - 1
 				hit_timer = 10
 				die:play()
+				demons[dnumber].pos = {center+1,center+1}
+				break
 			else
-				demons[dnumber].pos[1] = -1
-				demons[dnumber].pos[2] = -1
+				demons[dnumber].pos = {center+1,center+1}
+				demons[dnumber].timer = 5
 				score = score + 10000
 				enemy:stop()
 				enemy:play()
@@ -287,7 +297,10 @@ local cycle_stage = 2
 local cycling_table = {{-1,0},{0,-1},{1,0},{0,1}}
 local sound_played = false
 local sound2_played = false
+local map_genned = true
 function love.draw()
+	calculate_game_scale(mapsize)
+
 	if lives > 0 then
 	if pause == false then
 	if hit_timer == 0 then
@@ -298,12 +311,11 @@ function love.draw()
 		movementsound:play()
 		mouth = not mouth
 		panimation_update = 0
+		map_genned = false
 	end
 	end
 	--the death animation
 	else
-		
-		
 		mouth = false
 		if hit_timer > 6.6 then
 			cycle_timer = cycle_timer + 0.1
@@ -326,7 +338,6 @@ function love.draw()
 			dir[2] = cycling_table[3][2]
 			
 			if hit_timer < 4.5 then
-				map_generate()
 				sound_played = false
 			end
 			
@@ -338,15 +349,14 @@ function love.draw()
 			if hit_timer < 3 and hit_timer > 2 then
 				sound2_played = false
 				sound_1played = false
-				dir[1] = cycling_table[math.random(1,4)][1]
-				dir[2] = cycling_table[math.random(1,4)][2]
+				--reset map
+				if map_genned == false then
+					map_genned = true
+					map_generate()
+				end
 			end
-			
-			
 		end
 	end
-	
-	calculate_game_scale(mapsize)
 	
 	love.graphics.print("SCORE: "..score, 0, 0)
 	if poweruptimer > 0 then
@@ -354,16 +364,36 @@ function love.draw()
 	end
 	love.graphics.print("LIVES: "..lives, 600,0)
 	--render map
-	for x=1,mapsize do
-	for y=1,mapsize do
-		if map[x][y] == 1 then
-			love.graphics.draw(tileset.tile, y*tilesize, x*tilesize,0,scale,scale)
-		elseif map[x][y] == 2 then
-			love.graphics.draw(tileset.point, y*tilesize, x*tilesize,0,scale,scale)
-		elseif map[x][y] == 3 then
-			love.graphics.draw(tileset.powerup, y*tilesize, x*tilesize,0,scale,scale)
+	if hit_timer == 0 then
+		for x=1,mapsize do
+		for y=1,mapsize do
+			if map[x][y] == 1 then
+				love.graphics.draw(tileset.tile, y*tilesize, x*tilesize,0,scale,scale)
+			elseif map[x][y] == 2 then
+				love.graphics.draw(tileset.point, y*tilesize, x*tilesize,0,scale,scale)
+			elseif map[x][y] == 3 then
+				love.graphics.draw(tileset.powerup, y*tilesize, x*tilesize,0,scale,scale)
+			elseif map[x][y] == 4 then
+				love.graphics.draw(tileset.pit, y*tilesize, x*tilesize,0,scale,scale)
+			end
 		end
-	end
+		end
+	elseif hit_timer <=  4.5 then
+		--render glitches
+		for x=1,mapsize do
+		for y=1,mapsize do
+			local randy = love.math.random(1,4)
+			if randy == 1 then
+				love.graphics.draw(tileset.tile, y*tilesize, x*tilesize,0,scale,scale)
+			elseif randy == 2 then
+				love.graphics.draw(tileset.point, y*tilesize, x*tilesize,0,scale,scale)
+			elseif randy == 3 then
+				love.graphics.draw(tileset.powerup, y*tilesize, x*tilesize,0,scale,scale)
+			elseif randy == 4 then
+				love.graphics.draw(tileset.pit, y*tilesize, x*tilesize,0,scale,scale)
+			end
+		end
+		end
 	end
 	
 	--draw ai
@@ -398,30 +428,33 @@ function love.draw()
 	end
 	end
 	
-	--fix flipping image to other tile
-	local size0 = 0
-	local size1 = dir[1]
-	if dir[1] == 0 then size1 = 1 end
-	if dir[1] == -1 then size0 = tilesize end
 	
-	local size2 = dir[2]
-	if dir[2] == 1 then size2 = math.rad(90) elseif dir[2] == -1 then size2 = math.rad(-90) end
-	--fix the rotation location
-	local size3 = 0
-	local size4 = 0
-	if dir[2] == -1 then 
-		size3 = 0
-		size4 = tilesize
-	elseif dir[2] == 1 then 
-		size3 = tilesize
-		size4 = 0
-	end
+	if hit_timer >  4.5 or hit_timer == 0 then
+		--fix flipping image to other tile
+		local size0 = 0
+		local size1 = dir[1]
+		if dir[1] == 0 then size1 = 1 end
+		if dir[1] == -1 then size0 = tilesize end
+		
+		local size2 = dir[2]
+		if dir[2] == 1 then size2 = math.rad(90) elseif dir[2] == -1 then size2 = math.rad(-90) end
+		--fix the rotation location
+		local size3 = 0
+		local size4 = 0
+		if dir[2] == -1 then 
+			size3 = 0
+			size4 = tilesize
+		elseif dir[2] == 1 then 
+			size3 = tilesize
+			size4 = 0
+		end
 
-	--animate mouth
-	if mouth == true then
-		love.graphics.draw(tileset.player_mouthclose, pos[1]*tilesize+size3+size0, pos[2]*tilesize+size4,size2,scale*size1,scale)
-	else
-		love.graphics.draw(tileset.player, pos[1]*tilesize+size3+size0, pos[2]*tilesize+size4,size2,scale*size1,scale)
+		--animate mouth
+		if mouth == true then
+			love.graphics.draw(tileset.player_mouthclose, pos[1]*tilesize+size3+size0, pos[2]*tilesize+size4,size2,scale*size1,scale)
+		else
+			love.graphics.draw(tileset.player, pos[1]*tilesize+size3+size0, pos[2]*tilesize+size4,size2,scale*size1,scale)
+		end
 	end
 
 	love.graphics.print("Current FPS: "..tostring(love.timer.getFPS( )), 10, 10)
