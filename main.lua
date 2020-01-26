@@ -11,7 +11,9 @@
 
 function love.load()
 	love.window.setMode(800, 600, {resizable=true, vsync=true, minwidth=400, minheight=300})
-
+	
+	joysticks = love.joystick.getJoysticks()
+    joystick = joysticks[1]
 	
 	Grid = require ("jumper.grid") -- The grid class
 	Pathfinder = require ("jumper.pathfinder") -- The pathfinder class
@@ -56,6 +58,9 @@ function love.update(dt)
 	if lives > 0 then
 	if pause == false then
 		if hit_timer == 0 then
+			input()
+			input_joystick()
+		
 			if poweruptimer > 0 then
 				poweruptimer = poweruptimer - dt
 				if poweruptimer < 0 then
@@ -78,9 +83,7 @@ function love.update(dt)
 end
 
 local speedbuffer = 8 -- this controls the speed of the player (lower is slower
-function player_move()
-	
-	
+function player_move()	
 	--check everything when on center of map section
 	if pos[1] == realpos[1] and pos[2] == realpos[2] then
 		--add this to be a "speed buffer" so that the player doesn't go off center of the tiles
@@ -149,19 +152,38 @@ function player_move()
 end
 
 --player input
+function input(dt)
+	--temporarily store the direction to do collision checks
+	if love.keyboard.isDown('up') and realpos[2] > 1 then
+		dirbuffer={0,-1}
+	elseif love.keyboard.isDown('down') and realpos[2] < mapsize then
+		dirbuffer={0,1}
+	elseif love.keyboard.isDown('left') and realpos[1] > 1 then
+		dirbuffer={-1,0}
+	elseif love.keyboard.isDown('right') and realpos[1] < mapsize then
+		dirbuffer={1,0}
+	end
+end
+function input_joystick()
+	if not joystick then return end
+ 
+ 
+	--temporarily store the direction to do collision checks
+	if joystick:isGamepadDown('dpup') and realpos[2] > 1 then
+		dirbuffer={0,-1}
+	elseif joystick:isGamepadDown('dpdown') and realpos[2] < mapsize then
+		dirbuffer={0,1}
+	elseif joystick:isGamepadDown('dpleft') and realpos[1] > 1 then
+		dirbuffer={-1,0}
+	elseif joystick:isGamepadDown('dpright') and realpos[1] < mapsize then
+		dirbuffer={1,0}
+	end
+end
+
 function love.keypressed(key)
 	local oldpos1 = pos[1]
 	local oldpos2 = pos[2]
-	--temporarily store the direction to do collision checks
-	if key == 'up' and realpos[2] > 1 then
-		dirbuffer={0,-1}
-	elseif key == 'down' and realpos[2] < mapsize then
-		dirbuffer={0,1}
-	elseif key == 'left' and realpos[1] > 1 then
-		dirbuffer={-1,0}
-	elseif key == 'right' and realpos[1] < mapsize then
-		dirbuffer={1,0}
-	end
+	
 	if key == 'escape' then
 		love.event.quit()
 	end
