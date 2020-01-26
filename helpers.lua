@@ -21,6 +21,12 @@ function map_generate()
 	for x = 1,mapsize do
 	map[x]={}
 	for y = 1,mapsize do
+		if x == 1 or x == mapsize or y == 1 or 1 == mapsize then
+			map[x][y] = 0
+		else
+			map[x][y] = 2
+		end
+		--[[
 		local perlin = math.random() * math.random()
 		map[x][y] = 0
 		if perlin >= 0.45 then
@@ -32,6 +38,7 @@ function map_generate()
 		if perlin >= 0.9 then
 			map[x][y] = 3
 		end
+		]]--
 	end
 	end
 	
@@ -56,7 +63,7 @@ function map_generate()
 	
 	--generate demons here for debug
 	demons = {}
-	demonnumber = math.random(3,10)
+	demonnumber = math.random(5,30)
 	for i = 1,demonnumber do
 		local dpos = {math.random(2,mapsize-1),math.random(2,mapsize-1)}
 		demons[i] = {pos={dpos[1],dpos[2]},path={},realpos={dpos[1],dpos[2]},dir={0,0}} --change [1] [2] to pos = {1,2}

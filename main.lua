@@ -1,10 +1,10 @@
---create quadrants (maybe 4-8) and build the map made of that
+--create quadrants (maybe 2x2) and build the map made of that
 
 --optimize pos[1] pos[2] into pos = {1,2}
 
---add in counter to count how many pellets and list on screen then put 
-
 --make ghosts respawn
+
+
 
 function love.load()
 	love.window.setMode(800, 600, {resizable=true, vsync=true, minwidth=400, minheight=300})
@@ -26,10 +26,10 @@ function love.load()
 	lose = love.audio.newSource("sounds/lose.ogg", "static")
 
 
-	poweruptimer = 0
+	poweruptimer = 1000
 	lives = 10
 
-	mapsize = 25
+	mapsize = 20
 	tilesize = 12
 	scale = tilesize / 32
 	
@@ -42,6 +42,7 @@ function love.load()
 	panimation_update = 0
 	
 	pause = false
+	debug = false
 	
 	hit_timer = 0 --this is used for when the player gets hit by demon
 	level = 1
@@ -58,7 +59,6 @@ function love.update(dt)
 				end
 			end
 			--move the demons
-			ai_pathfind()
 			ai_move()
 
 			--move the player
@@ -73,16 +73,19 @@ function love.update(dt)
 	end
 end
 
-
-function player_move()	
-
-	--add this to be a "speed buffer" so that the player doesn't go off center of the tiles
-	local speedbuffer = 8
+local speedbuffer = 8 -- this controls the speed of the player (lower is slower
+function player_move()
+	
+	
 	--check everything when on center of map section
 	if pos[1] == realpos[1] and pos[2] == realpos[2] then
+		--add this to be a "speed buffer" so that the player doesn't go off center of the tiles
 		if poweruptimer > 0 then
 			speedbuffer = 4
+		else
+			speedbuffer = 8
 		end
+		
 		pos[1] = math.floor(pos[1])
 		pos[2] = math.floor(pos[2])
 		local olddir = {0,0}
@@ -136,6 +139,7 @@ function player_move()
 
 	end
 	
+	print(speedbuffer)
 	pos[1] = pos[1] + (dir[1]/speedbuffer)
 	pos[2] = pos[2] + (dir[2]/speedbuffer)
 	realpos = {math.floor(pos[1]),math.floor(pos[2])}
@@ -158,6 +162,9 @@ function love.keypressed(key)
 	if key == 'escape' then
 		love.event.quit()
 	end
+	if key == 'f4' then
+		debug=not debug
+	end
 	if key == 'f5' then
 		map_generate()
 	end
@@ -169,50 +176,59 @@ function love.keypressed(key)
 	end
 end
 
+local ai_step = 1
 function ai_pathfind()
-	for dnumber,data in pairs(demons) do
-		if data.realpos[1] and data.realpos[2] and data.realpos[1] ~= -1 and data.realpos[2] ~= -1 then
-			--delete path to save calculations
-			if poweruptimer > 0 then
+	--for dnumber,data in pairs(demons) do
+	local dnumber = ai_step
+	local data = demons[dnumber]
+	
+	if data.realpos[1] and data.realpos[2] and data.realpos[1] ~= -1 and data.realpos[2] ~= -1 then
+		--delete path to save calculations
+		if poweruptimer > 0 then
+			demons[dnumber].path = {}
+		else
+			--print(dump(map))
+
+			-- Creates a grid object
+			local grid = Grid(map) 
+			-- Creates a pathfinder object using Jump Point Search
+			
+			local walkable = function(v) return v~=1 end
+			
+			local myFinder = Pathfinder(grid, 'ASTAR', walkable)
+
+			myFinder:setMode('ORTHOGONAL')
+			
+			-- Define start and goal locations coordinates
+			local startx, starty = math.floor(data.realpos[1]),math.floor(data.realpos[2])
+			local endx, endy = realpos[1],realpos[2]
+
+			-- Calculates the path, and its length
+			local path = myFinder:getPath(startx, starty, endx, endy)
+			if path and path:getLength() > 0 then
 				demons[dnumber].path = {}
-			else
-				--print(dump(map))
-
-				-- Creates a grid object
-				local grid = Grid(map) 
-				-- Creates a pathfinder object using Jump Point Search
-				
-				local walkable = function(v) return v~=1 end
-				
-				local myFinder = Pathfinder(grid, 'ASTAR', walkable)
-
-				myFinder:setMode('ORTHOGONAL')
-				
-				-- Define start and goal locations coordinates
-				local startx, starty = math.floor(data.realpos[1]),math.floor(data.realpos[2])
-				local endx, endy = realpos[1],realpos[2]
-
-				-- Calculates the path, and its length
-				local path = myFinder:getPath(startx, starty, endx, endy)
-				if path and path:getLength() > 0 then
-					demons[dnumber].path = {}
-					--demons[dnumber].path = path
-					for node, count in path:nodes() do
-						table.insert(data.path, {node:getX(),node:getY()})
-					end
-				else
-					demons[dnumber].path = 0
+				--demons[dnumber].path = path
+				for node, count in path:nodes() do
+					table.insert(data.path, {node:getX(),node:getY()})
 				end
+			else
+				demons[dnumber].path = 0
 			end
 		end
 	end
+	--end
+	ai_step = ai_step + 1
+	if ai_step > demonnumber then
+		ai_step = 1
+	end
+	
 end
 
 --this controls the actual "ai" of the demons
 function ai_move()
 	for dnumber,position in pairs(demons) do
 		if position[1] ~= -1 and position[2] ~= -1 and demons[dnumber].pos[1] == demons[dnumber].realpos[1] and demons[dnumber].pos[2] == demons[dnumber].realpos[2] then
-		
+			ai_pathfind()
 			--move randomly if no path
 			if poweruptimer > 0 then   -----------------------here
 				local z = math.random(1,2)
@@ -357,11 +373,13 @@ function love.draw()
 			--this is debug
 			--print(dump(data.path))
 			--draw path
-			--if type(data.path) == "table" then
-			--	for count, node in ipairs(data.path) do
-			--		love.graphics.draw(tileset.path, node[1]*tilesize, node[2]*tilesize,0,scale,scale)
-			--	end
-			--end
+			if debug == true then
+				if type(data.path) == "table" then
+					for count, node in ipairs(data.path) do
+						love.graphics.draw(tileset.path, node[1]*tilesize, node[2]*tilesize,0,scale,scale)
+					end
+				end
+			end
 			--print(data[1])
 			--print(data[2])
 			--print(data[1].."|"..data[2])
