@@ -9,7 +9,7 @@ end
 
 --a function for collision
 function collide(maptile)
-	if maptile == 1 or maptile == 4 then
+	if maptile == 1 or maptile == 4 or maptile == 5 then
 		return(true)
 	end
 end
@@ -51,23 +51,7 @@ function map_generate()
 		end
 	end
 	end
-	--create the maze
-	--[[
-	for x = 1,mapsize-1 do
-	for y = 1,mapsize-1 do
-		local xp,yp = love.math.random(2,5),love.math.random(2,5)
-		local xp2,yp2 = love.math.random(4,5),love.math.random(4,5)
-		
-		if x%xp==0 or y%yp==0 then
-			map[x][y] = 1
-		end
-		if x%xp2==0 or y%yp2==0 then
-			map[x][y] = 2
-		end
-		
-	end
-	end
-	]]--
+	--create maze
 	for x = 1,mapsize-1 do
 	for y = 1,mapsize-1 do
 		local chunk = template[0]--[love.math.random(1,8)]
@@ -77,6 +61,9 @@ function map_generate()
 					map[xx+x-1][yy+y-1] = value
 				end
 			end
+		end
+		if (x == 2 and y == 2) or (x == 2 and y == mapsize-1) or (x==mapsize-1 and y==2) or (x==mapsize-1 and y==mapsize-1) then
+			map[x][y] = 3
 		end
 	end
 	end
@@ -89,31 +76,49 @@ function map_generate()
 	end
 	end
 	
-	local center = math.floor(mapsize/2)
 	--make spawn pit
+	local center = math.floor(mapsize/2)
 	local chunk = template.spawnpit
 	for xx,data in ipairs(chunk) do
 		for yy,value in pairs(data) do
 			map[center-1+xx][center-1+yy]=value
 		end
 	end
+	--count pellets
+	for x = 1,mapsize do
+	for y = 1,mapsize do
+		if map[x][y] == 2 then
+			pellets = pellets + 1
+		end
+	end
+	end
 	
-	
-	pellets = math.floor(pellets*0.5)
-	
-	--reset players position for debug
-	pos = {center+1,center+3}
-	realpos = {math.floor(pos[1]),math.floor(pos[2])}
+	--easy mode - debug for now
+	if debug == true then
+		pellets = math.floor(pellets*0.02)
+	end
 	
 	--generate demons here for debug
 	demons = {}
-	demonnumber = math.random(1,20)
+	demonnumber = level
 	local dtimer = 0
 	for i = 1,demonnumber do
 		local dpos = {center+1,center+1}
 		demons[i] = {pos={dpos[1],dpos[2]},path={},realpos={dpos[1],dpos[2]},dir={0,0},timer=dtimer}
-		dtimer = dtimer + 0.5
+		dtimer = dtimer + 6
 	end
+	
+	--ramp up difficulty after level 10
+	demonspeed = 16
+	if level >= 10 then
+		demonspeed = 8
+	end
+	
+	--reset players position for debug
+	pos = {center+1,center+3}
+	realpos = {math.floor(pos[1]),math.floor(pos[2])}
+	dir = {0,1}
+	
 end
 
 

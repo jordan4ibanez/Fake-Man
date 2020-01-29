@@ -15,6 +15,9 @@ function love.load()
 	joysticks = love.joystick.getJoysticks()
     joystick = joysticks[1]
 	
+	--put this here so mapgen can use it
+	level = 1
+	
 	Grid = require ("jumper.grid") -- The grid class
 	Pathfinder = require ("jumper.pathfinder") -- The pathfinder class
 	require("maps")
@@ -51,7 +54,6 @@ function love.load()
 	debug = false
 	
 	hit_timer = 0 --this is used for when the player gets hit by demon
-	level = 1
 end
 
 function love.update(dt)
@@ -134,13 +136,18 @@ function player_move()
 			pellets = pellets - 1
 			--next level
 			if pellets == 0 then
-				hit_timer = 5.5
-				level = level + 1
+				if debug == false then
+					hit_timer = 5.5
+					level = level + 1
+				else
+					level = level + 1
+					map_generate()
+				end
 			end
 		end
 		if map[realpos[2]][realpos[1]] == 3 then --power up
 			pickup:play()
-			poweruptimer = 5
+			poweruptimer = poweruptimer + 5 --let them stack
 			map[realpos[2]][realpos[1]] = 0 
 		end
 
@@ -247,11 +254,12 @@ end
 --this controls the actual "ai" of the demons
 function ai_move(dt)
 	for dnumber,position in pairs(demons) do
+		--demons counter timer
 		if demons[dnumber].timer > 0 then
 			demons[dnumber].timer = demons[dnumber].timer - dt
 		end
 
-		if demons[dnumber].pos[1] == demons[dnumber].realpos[1] and demons[dnumber].pos[2] == demons[dnumber].realpos[2] then
+		if demons[dnumber].timer <= 0 and demons[dnumber].pos[1] == demons[dnumber].realpos[1] and demons[dnumber].pos[2] == demons[dnumber].realpos[2] then
 			--only pathfind when centered on tile
 			if poweruptimer == 0 and demons[dnumber].timer <= 0 then
 				ai_pathfind(dnumber)
@@ -278,7 +286,7 @@ function ai_move(dt)
 		--check if collided with player
 		local diff = {pos[1]-demons[dnumber].pos[1],pos[2]-demons[dnumber].pos[2]}
 		--print(dump(diff[1]))
-		local hitbox = 0.9
+		local hitbox = 0.8
 		if hit_timer == 0 and math.abs(diff[1]) <= hitbox and math.abs(diff[2]) <= hitbox then
 			local center = math.floor(mapsize/2)
 			if poweruptimer == 0 then
@@ -303,9 +311,9 @@ function ai_move(dt)
 				enemy:play()
 			end				
 		end
-		
-		demons[dnumber].pos[1] = demons[dnumber].pos[1] + (demons[dnumber].dir[1]/16)
-		demons[dnumber].pos[2] = demons[dnumber].pos[2] + (demons[dnumber].dir[2]/16)
+
+		demons[dnumber].pos[1] = demons[dnumber].pos[1] + (demons[dnumber].dir[1]/demonspeed)
+		demons[dnumber].pos[2] = demons[dnumber].pos[2] + (demons[dnumber].dir[2]/demonspeed)
 		demons[dnumber].realpos[1] = math.floor(demons[dnumber].pos[1])
 		demons[dnumber].realpos[2] = math.floor(demons[dnumber].pos[2])
 	end
