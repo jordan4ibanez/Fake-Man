@@ -202,13 +202,11 @@ function love.keypressed(key)
 	end
 end
 
-local ai_step = 1
-function ai_pathfind()
+function ai_pathfind(dnumber)
 	--for dnumber,data in pairs(demons) do
-	local dnumber = ai_step
 	local data = demons[dnumber]
 	
-	if data and data.realpos[1] and data.realpos[2] and data.realpos[1] ~= -1 and data.realpos[2] ~= -1 then
+	if data and data.realpos[1] and data.realpos[2] then
 		--delete path to save calculations
 		if poweruptimer > 0 then
 			demons[dnumber].path = {}
@@ -236,17 +234,12 @@ function ai_pathfind()
 				demons[dnumber].path = {}
 				--demons[dnumber].path = path
 				for node, count in path:nodes() do
-					table.insert(data.path, {node:getX(),node:getY()})
+					table.insert(demons[dnumber].path, {node:getX(),node:getY()})
 				end
 			else
 				demons[dnumber].path = 0
 			end
 		end
-	end
-	--end
-	ai_step = ai_step + 1
-	if ai_step > demonnumber then
-		ai_step = 1
 	end
 	
 end
@@ -259,7 +252,10 @@ function ai_move(dt)
 		end
 
 		if demons[dnumber].pos[1] == demons[dnumber].realpos[1] and demons[dnumber].pos[2] == demons[dnumber].realpos[2] then
-			ai_pathfind()
+			--only pathfind when centered on tile
+			if poweruptimer == 0 and demons[dnumber].timer <= 0 then
+				ai_pathfind(dnumber)
+			end
 			--move randomly if no path
 			if poweruptimer > 0 then   -----------------------here
 				local z = math.random(1,2)
@@ -279,15 +275,6 @@ function ai_move(dt)
 		end
 		
 		
-		--do this here to prevent glitching (ai runs pathfinding in a loop, 1 after another every step to reserve cpu)
-		if demons[dnumber].timer <= 0 then
-			demons[dnumber].pos[1] = demons[dnumber].pos[1] + (demons[dnumber].dir[1]/16)
-			demons[dnumber].pos[2] = demons[dnumber].pos[2] + (demons[dnumber].dir[2]/16)
-			demons[dnumber].realpos[1] = math.floor(demons[dnumber].pos[1])
-			demons[dnumber].realpos[2] = math.floor(demons[dnumber].pos[2])
-	
-		end
-		
 		--check if collided with player
 		local diff = {pos[1]-demons[dnumber].pos[1],pos[2]-demons[dnumber].pos[2]}
 		--print(dump(diff[1]))
@@ -299,16 +286,28 @@ function ai_move(dt)
 				lives = lives - 1
 				hit_timer = 10
 				die:play()
-				demons[dnumber].pos = {center+1,center+1}
+				for test,test2 in pairs(demons) do
+					demons[test].pos = {center+1,center+1}
+					demons[test].path = {}
+					demons[test].dir = {0,0}
+					demons[test].timer = 5
+				end
 				break
 			else
 				demons[dnumber].pos = {center+1,center+1}
+				demons[dnumber].path = {}
+				demons[dnumber].dir = {0,0}
 				demons[dnumber].timer = 5
 				score = score + 10000
 				enemy:stop()
 				enemy:play()
 			end				
 		end
+		
+		demons[dnumber].pos[1] = demons[dnumber].pos[1] + (demons[dnumber].dir[1]/16)
+		demons[dnumber].pos[2] = demons[dnumber].pos[2] + (demons[dnumber].dir[2]/16)
+		demons[dnumber].realpos[1] = math.floor(demons[dnumber].pos[1])
+		demons[dnumber].realpos[2] = math.floor(demons[dnumber].pos[2])
 	end
 	
 end
