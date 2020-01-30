@@ -81,7 +81,7 @@ function map_generate()
 	local chunk = template.spawnpit
 	for xx,data in ipairs(chunk) do
 		for yy,value in pairs(data) do
-			map[center-1+xx][center-1+yy]=value
+			map[center-2+xx][center-2+yy]=value
 		end
 	end
 	--count pellets
@@ -98,7 +98,7 @@ function map_generate()
 		pellets = math.floor(pellets*0.02)
 	end
 	
-	--generate demons here for debug
+	--generate demons in spawn pit
 	demons = {}
 	demonnumber = level
 	local dtimer = 0
@@ -115,7 +115,7 @@ function map_generate()
 	end
 	
 	--reset players position for debug
-	pos = {center+1,center+3}
+	pos = {center+1,center+4}
 	realpos = {math.floor(pos[1]),math.floor(pos[2])}
 	dir = {0,1}
 	

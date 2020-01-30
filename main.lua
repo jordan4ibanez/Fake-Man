@@ -10,8 +10,8 @@
 function love.load()
 
 	moonshine = require 'moonshine'
-	effect = moonshine(moonshine.effects.scanlines)--moonshine(moonshine.effects.crt).chain(moonshine.effects.gaussianblur)
-	effect.scanlines.thickness = 1
+	effect = moonshine(moonshine.effects.gaussianblur).chain(moonshine.effects.crt)
+	--effect.scanlines.thickness = 1
 	
 	--effect.crt.feather = 0.01
 	--effect.crt.distortionFactor = {1.05,1.05}
@@ -42,7 +42,7 @@ function love.load()
 	lose = love.audio.newSource("sounds/lose.ogg", "static")
 
 
-	poweruptimer = 100
+	poweruptimer = 0
 	lives = 10
 
 	mapsize = 21 --make this odd
@@ -96,11 +96,6 @@ function player_move()
 	--check everything when on center of map section
 	if pos[1] == realpos[1] and pos[2] == realpos[2] then
 		--add this to be a "speed buffer" so that the player doesn't go off center of the tiles
-		if poweruptimer > 0 then
-			speedbuffer = 4
-		else
-			speedbuffer = 8
-		end
 		
 		pos[1] = math.floor(pos[1])
 		pos[2] = math.floor(pos[2])
@@ -262,7 +257,7 @@ end
 function ai_move(dt)
 	for dnumber,position in pairs(demons) do
 		--demons counter timer
-		if demons[dnumber].timer > 0 then
+		if poweruptimer == 0 and demons[dnumber].timer > 0 then
 			demons[dnumber].timer = demons[dnumber].timer - dt
 		end
 
@@ -335,9 +330,11 @@ local sound_played = false
 local sound2_played = false
 local map_genned = true
 function love.draw()
-	translate_graphics()
-	effect.resize(love.graphics.getWidth(), love.graphics.getHeight())
 	calculate_game_scale(mapsize)
+	translate_graphics()
+	--effect.resize(love.graphics.getWidth(), love.graphics.getHeight())
+	
+	
 	--effect(function()
 	if lives > 0 then
 	if pause == false then
