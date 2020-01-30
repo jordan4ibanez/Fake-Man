@@ -152,7 +152,7 @@ function translate_graphics()
 	local translation = 0
 
 	if width>=height then
-		translation = (width-height)/2
+		translation = 50--(width-height)/2
 	end
 	--(-scale*6) moves the start of the map to the 0 value (kinda)
 	love.graphics.translate(translation, 0)
