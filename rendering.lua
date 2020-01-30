@@ -172,13 +172,13 @@ function render()
 	love.graphics.print("Pellets Remaining: "..tostring(pellets), 200, 10)
 	love.graphics.print("Level: "..tostring(level), 400, 10)
 	else
-		local width, height, flags = love.window.getMode( )
-		love.graphics.draw(tileset.pause, (width/2)-64, (height/2)-16)
+		local size = (tilesize*(mapsize+2))/2
+		love.graphics.draw(tileset.pause, size-64, size-16)
 	end
 	else
 		--game over - extra annoying
-		local width, height, flags = love.window.getMode( )
-		love.graphics.draw(tileset.gameover, (width/2)-64, (height/2)-16)
+		local size = (tilesize*(mapsize+2))/2
+		love.graphics.draw(tileset.gameover, size-64, size-16)
 		lose:play()
 	end
 	--end)

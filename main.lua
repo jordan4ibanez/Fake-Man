@@ -140,6 +140,7 @@ function player_move()
 			pellets = pellets - 1
 			--next level
 			if pellets == 0 then
+				poweruptimer = 0
 				if debug == false then
 					hit_timer = 5.5
 					level = level + 1
