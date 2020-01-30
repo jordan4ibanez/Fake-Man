@@ -2,15 +2,22 @@
 
 --optimize pos[1] pos[2] into pos = {1,2}
 
---make ghosts respawn
+--make ghosts keep moving in direction until finding another direction to go in ( check not current direction every time they reach a new tile)
 
---change keypressed to check always and add controller support
-
---make ghosts keep moving in direction until stopped by wall when powered up
+--fill in the little chunks around the spawnpit so players don't get stuck
 
 
 function love.load()
-	love.window.setMode(800, 600, {resizable=true, vsync=true, minwidth=400, minheight=300})
+
+	moonshine = require 'moonshine'
+	effect = moonshine(moonshine.effects.scanlines)--moonshine(moonshine.effects.crt).chain(moonshine.effects.gaussianblur)
+	effect.scanlines.thickness = 1
+	
+	--effect.crt.feather = 0.01
+	--effect.crt.distortionFactor = {1.05,1.05}
+	
+	
+	love.window.setMode(800, 830, {resizable=true, vsync=true, minwidth=400, minheight=300})
 	
 	joysticks = love.joystick.getJoysticks()
     joystick = joysticks[1]
@@ -35,7 +42,7 @@ function love.load()
 	lose = love.audio.newSource("sounds/lose.ogg", "static")
 
 
-	poweruptimer = 0
+	poweruptimer = 100
 	lives = 10
 
 	mapsize = 21 --make this odd
@@ -328,8 +335,10 @@ local sound_played = false
 local sound2_played = false
 local map_genned = true
 function love.draw()
+	translate_graphics()
+	effect.resize(love.graphics.getWidth(), love.graphics.getHeight())
 	calculate_game_scale(mapsize)
-
+	--effect(function()
 	if lives > 0 then
 	if pause == false then
 	if hit_timer == 0 then
@@ -499,4 +508,6 @@ function love.draw()
 		love.graphics.draw(tileset.gameover, (width/2)-64, (height/2)-16)
 		lose:play()
 	end
+	--end)
+	
 end

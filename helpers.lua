@@ -134,8 +134,8 @@ end
 --rescales the map
 function calculate_game_scale(mapsize1)
 	local width, height, flags = love.window.getMode( )
-
-	mapsize1 = mapsize1 + 1
+	
+	mapsize1 = mapsize1 + 2
 	if height>=width then
 		tilesize = width/mapsize1
 	else
@@ -143,4 +143,17 @@ function calculate_game_scale(mapsize1)
 	end
 	scale = tilesize / 32
 	return({tilesize,scale})
+end
+
+--centers the map
+function translate_graphics()
+	local width, height, flags = love.window.getMode( )
+
+	local translation = 0
+
+	if width>=height then
+		translation = (width-height)/2
+	end
+	--(-scale*6) moves the start of the map to the 0 value (kinda)
+	love.graphics.translate(translation, 0)
 end
