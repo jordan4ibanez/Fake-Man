@@ -17,7 +17,8 @@ function love.load()
 	--effect.crt.distortionFactor = {1.05,1.05}
 	
 	
-	love.window.setMode(800, 830, {resizable=true, vsync=true, minwidth=400, minheight=300})
+	love.window.setMode(800, 800, {resizable=true, vsync=true, minwidth=400, minheight=400})
+	--love.graphics.setDefaultFilter("nearest", "nearest", 0 )
 	
 	joysticks = love.joystick.getJoysticks()
     joystick = joysticks[1]
