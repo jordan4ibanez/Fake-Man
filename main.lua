@@ -9,8 +9,8 @@
 
 function love.load()
 
-	moonshine = require 'moonshine'	
-	effect = moonshine(moonshine.effects.gaussianblur).chain(moonshine.effects.crt)
+	--moonshine = require 'moonshine'	
+	--effect = moonshine(moonshine.effects.crt)--.chain(moonshine.effects.crt)
 	--effect.scanlines.thickness = 1
 	
 	--effect.crt.feather = 0.01

@@ -8,10 +8,10 @@ local map_genned = true
 
 function render()
 	calculate_game_scale(mapsize)
-	--translate_graphics()
-	effect.resize((mapsize+2)*tilesize, (mapsize+2)*tilesize)
+	translate_graphics()
+	--effect.resize((mapsize+2)*tilesize, (mapsize+2)*tilesize)
 	
-	effect(function()
+	--effect(function()
 	if lives > 0 then
 	if pause == false then
 	if hit_timer == 0 then
@@ -181,5 +181,5 @@ function render()
 		love.graphics.draw(tileset.gameover, (width/2)-64, (height/2)-16)
 		lose:play()
 	end
-	end)
+	--end)
 end
