@@ -1,19 +1,11 @@
 --a helper for mapgen
-function is_even(number)
+local function is_even(number)
 	if (number % 2 == 0) then
 		return(true)
 	else
 		return(false)
 	end
 end
-
---a function for collision
-function collide(maptile)
-	if maptile == 1 or maptile == 4 or maptile == 5 then
-		return(true)
-	end
-end
-
 
 
 --helps read tables
@@ -100,12 +92,12 @@ function map_generate()
 	
 	--generate demons in spawn pit
 	demons = {}
-	demonnumber = level
+	demonnumber = 100--level
 	local dtimer = 0
 	for i = 1,demonnumber do
 		local dpos = {center+1,center+1}
 		demons[i] = {pos={dpos[1],dpos[2]},path={},realpos={dpos[1],dpos[2]},dir={0,0},timer=dtimer}
-		dtimer = dtimer + 6
+		dtimer = dtimer + 1
 	end
 	
 	--ramp up difficulty after level 10
@@ -131,29 +123,8 @@ function load_textures()
 	end
 end
 
---rescales the map
-function calculate_game_scale(mapsize1)
-	local width, height, flags = love.window.getMode( )
-	
-	mapsize1 = mapsize1 + 2
-	if height>=width then
-		tilesize = width/mapsize1
-	else
-		tilesize = height/mapsize1
-	end
-	scale = tilesize / 32
-	return({tilesize,scale})
-end
 
---centers the map
-function translate_graphics()
-	local width, height, flags = love.window.getMode( )
 
-	local translation = 0
 
-	if width>=height then
-		translation = (width-height)/2
-	end
-	--(-scale*6) moves the start of the map to the 0 value (kinda)
-	love.graphics.translate(translation, 0)
-end
+
+

@@ -7,17 +7,18 @@
 --fill in the little chunks around the spawnpit so players don't get stuck
 
 
+
 function love.load()
 
-	--moonshine = require 'moonshine'	
-	--effect = moonshine(moonshine.effects.crt)--.chain(moonshine.effects.crt)
+	moonshine = require 'moonshine'	
+	effect = moonshine(moonshine.effects.crt)--.chain(moonshine.effects.crt)
 	--effect.scanlines.thickness = 1
 	
-	--effect.crt.feather = 0.01
-	--effect.crt.distortionFactor = {1.05,1.05}
+	effect.crt.feather = 0.01
+	effect.crt.distortionFactor = {1.05,1.05}
 	
 	
-	love.window.setMode(800, 800, {resizable=true, vsync=true, minwidth=400, minheight=400})
+	love.window.setMode(800, 800, {resizable=true, vsync=false, minwidth=400, minheight=400})
 	--love.graphics.setDefaultFilter("nearest", "nearest", 0 )
 	
 	joysticks = love.joystick.getJoysticks()
@@ -30,11 +31,11 @@ function love.load()
 	Pathfinder = require ("jumper.pathfinder") -- The pathfinder class
 	require("maps")
 	require("helpers")
+	load_textures()
 	require("rendering")
 	math.randomseed( os.time() )
 	score = 0
 	
-	load_textures()
 	movementsound = love.audio.newSource("sounds/move1.ogg", "static")
 	pickup = love.audio.newSource("sounds/pickup.ogg", "static")
 	die = love.audio.newSource("sounds/die.ogg", "static")
@@ -48,7 +49,7 @@ function love.load()
 	lives = 10
 
 	mapsize = 21 --make this odd
-	tilesize = 12
+	tilesize = 800/(mapsize+2)
 	scale = tilesize / 32
 	
 	map = {}
@@ -56,9 +57,7 @@ function love.load()
 		
 	dir = {0,0}
 	dirbuffer={0,0}
-		
-	panimation_update = 0
-	
+			
 	pause = false
 	debug = false
 	
@@ -90,6 +89,13 @@ function love.update(dt)
 			end
 		end
 	end
+	end
+end
+
+--a function for collision
+function collide(maptile)
+	if maptile == 1 or maptile == 4 or maptile == 5 then
+		return(true)
 	end
 end
 
@@ -323,9 +329,4 @@ function ai_move(dt)
 		demons[dnumber].realpos[2] = math.floor(demons[dnumber].pos[2])
 	end
 	
-end
-
-
-function love.draw()
-	render()
 end
